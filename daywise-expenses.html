@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DayWise — Expense Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0A1628;
+    min-height: 100vh;
+    color: white;
+  }
+
+  .app { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 240px;
+    background: #0D1E35;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    padding: 32px 20px;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+  }
+
+  .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding-left: 8px; }
+  .logo-text { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; }
+  .logo-text span:last-child { color: #FF6B35; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: 12px; cursor: pointer;
+    transition: all 0.2s; color: #5a7a9a; font-size: 14px;
+    font-weight: 500; margin-bottom: 4px;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+  .nav-item.active { background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(255,179,71,0.1)); color: white; border: 1px solid rgba(255,107,53,0.3); }
+  .nav-section { font-size: 11px; color: #2a4a6a; letter-spacing: 2px; text-transform: uppercase; padding-left: 12px; margin: 16px 0 8px; }
+
+  .sidebar-bottom { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 20px; }
+  .user-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.04); }
+  .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #FF6B35, #FFB347); display: flex; align-items: center; justify-content: center; font-weight: 600; }
+  .user-info p { font-size: 13px; font-weight: 500; }
+  .user-info span { font-size: 11px; color: #5a7a9a; }
+
+  .main { margin-left: 240px; flex: 1; padding: 32px; }
+
+  /* Header */
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+  .header h1 { font-family: 'Playfair Display', serif; font-size: 28px; }
+  .header h1 span { color: #34d399; }
+  .header p { color: #5a7a9a; font-size: 14px; margin-top: 4px; }
+  .header-actions { display: flex; gap: 12px; }
+
+  .btn { padding: 10px 20px; border-radius: 12px; font-size: 14px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+  .btn-primary { background: linear-gradient(135deg, #34d399, #059669); color: white; border: none; box-shadow: 0 4px 16px rgba(52,211,153,0.3); }
+  .btn-primary:hover { transform: translateY(-2px); }
+  .btn-secondary { background: rgba(255,255,255,0.06); color: white; border: 1px solid rgba(255,255,255,0.1); }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+
+  .stat-card {
+    background: #0D1E35;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px;
+    padding: 20px;
+    transition: transform 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-3px); }
+  .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 12px; }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+  .stat-label { font-size: 12px; color: #5a7a9a; }
+  .stat-change { font-size: 12px; margin-top: 8px; }
+  .up { color: #34d399; }
+  .down { color: #f87171; }
+
+  /* Content grid */
+  .content { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+
+  .card { background: #0D1E35; border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 24px; margin-bottom: 20px; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .card-title { font-size: 16px; font-weight: 600; }
+  .card-action { font-size: 13px; color: #34d399; cursor: pointer; background: none; border: none; font-family: 'DM Sans', sans-serif; }
+
+  /* Add expense form */
+  .add-form { display: none; background: #0D1E35; border: 1px dashed rgba(52,211,153,0.3); border-radius: 20px; padding: 24px; margin-bottom: 20px; }
+  .add-form.visible { display: block; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 14px; color: white; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
+  .form-input:focus { border-color: #34d399; }
+  .form-input::placeholder { color: #2a4a6a; }
+  .form-select { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 14px; color: white; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; cursor: pointer; }
+  .form-select option { background: #0D1E35; }
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
+
+  /* Type toggle */
+  .type-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+  .type-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: #5a7a9a; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+  .type-btn.expense.active { background: rgba(248,113,113,0.2); border-color: #f87171; color: #f87171; }
+  .type-btn.income.active { background: rgba(52,211,153,0.2); border-color: #34d399; color: #34d399; }
+
+  /* Transaction list */
+  .transaction {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: all 0.2s; cursor: pointer;
+  }
+  .transaction:last-child { border-bottom: none; }
+  .transaction:hover { padding-left: 8px; }
+
+  .tx-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .tx-info { flex: 1; }
+  .tx-name { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+  .tx-meta { font-size: 12px; color: #5a7a9a; }
+  .tx-amount { font-size: 16px; font-weight: 600; }
+  .tx-amount.out { color: #f87171; }
+  .tx-amount.in { color: #34d399; }
+  .tx-delete { background: none; border: none; color: #3a5a7a; cursor: pointer; font-size: 16px; opacity: 0; transition: opacity 0.2s; }
+  .transaction:hover .tx-delete { opacity: 1; }
+
+  /* Date group */
+  .date-group { font-size: 12px; color: #3a5a7a; letter-spacing: 1px; text-transform: uppercase; margin: 16px 0 8px; }
+
+  /* Right panel */
+  .right-col { display: flex; flex-direction: column; gap: 20px; }
+
+  /* Budget bars */
+  .budget-item { margin-bottom: 16px; }
+  .budget-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .budget-label { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+  .budget-amounts { font-size: 12px; color: #5a7a9a; }
+  .budget-bar { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+  .budget-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+
+  /* Donut chart */
+  .donut-wrap { display: flex; justify-content: center; margin: 16px 0; }
+  .donut-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #7a9ab5; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Savings goal */
+  .savings-card { background: linear-gradient(135deg, #0d2a1a, #0a1f28); border: 1px solid rgba(52,211,153,0.2); border-radius: 20px; padding: 20px; }
+  .savings-title { font-size: 14px; font-weight: 600; color: #34d399; margin-bottom: 12px; }
+  .savings-amount { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #34d399; margin-bottom: 4px; }
+  .savings-sub { font-size: 12px; color: #5a7a9a; margin-bottom: 16px; }
+  .savings-bar { height: 10px; background: rgba(52,211,153,0.1); border-radius: 5px; overflow: hidden; margin-bottom: 8px; }
+  .savings-fill { height: 100%; background: linear-gradient(90deg, #34d399, #059669); border-radius: 5px; width: 62%; }
+  .savings-meta { display: flex; justify-content: space-between; font-size: 12px; color: #5a7a9a; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 20px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .content { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <svg width="38" height="38" viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r="12" fill="#FF6B35"/>
+        <line x1="20" y1="4" x2="20" y2="9" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="20" y1="31" x2="20" y2="36" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="4" y1="20" x2="9" y2="20" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="31" y1="20" x2="36" y2="20" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="13,20 18,25 28,14" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="logo-text"><span>Day</span><span>Wise</span></div>
+    </div>
+    <div class="nav-section">Main</div>
+    <div class="nav-item"><span>🏠</span> Dashboard</div>
+    <div class="nav-item"><span>✅</span> Tasks</div>
+    <div class="nav-item active"><span>💰</span> Expenses</div>
+    <div class="nav-item"><span>🎯</span> Goals</div>
+    <div class="nav-section">Life</div>
+    <div class="nav-item"><span>😴</span> Sleep</div>
+    <div class="nav-item"><span>📓</span> Journal</div>
+    <div class="nav-item"><span>💪</span> Habits</div>
+    <div class="nav-item"><span>🤖</span> AI Assistant</div>
+    <div class="nav-section">Account</div>
+    <div class="nav-item"><span>⚙️</span> Settings</div>
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar">S</div>
+        <div class="user-info"><p>Saikishore</p><span>Free Plan</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <div>
+        <h1>Expense <span>Tracker</span> 💰</h1>
+        <p>Know where every dollar goes — farmer to millionaire</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" onclick="toggleForm()">+ Add Transaction</button>
+        <button class="btn btn-primary">📊 Monthly Report</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(52,211,153,0.15)">💵</div>
+        <div class="stat-value" style="color:#34d399">$3,500</div>
+        <div class="stat-label">Total Income</div>
+        <div class="stat-change up">↑ +$500 this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(248,113,113,0.15)">💸</div>
+        <div class="stat-value" style="color:#f87171">$2,260</div>
+        <div class="stat-label">Total Expenses</div>
+        <div class="stat-change down">↑ +$120 vs last month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(251,191,36,0.15)">🏦</div>
+        <div class="stat-value" style="color:#fbbf24">$1,240</div>
+        <div class="stat-label">Remaining Budget</div>
+        <div class="stat-change up">↑ 35% saved</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(139,92,246,0.15)">🎯</div>
+        <div class="stat-value" style="color:#a78bfa">$620</div>
+        <div class="stat-label">Saved This Month</div>
+        <div class="stat-change up">↑ On track!</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div>
+        <!-- Add Form -->
+        <div class="add-form" id="addForm">
+          <div class="type-toggle">
+            <button class="type-btn expense active" id="expenseBtn" onclick="setType('expense')">💸 Expense</button>
+            <button class="type-btn income" id="incomeBtn" onclick="setType('income')">💵 Income</button>
+          </div>
+          <div class="form-grid">
+            <input class="form-input" type="text" placeholder="Description" id="txDesc"/>
+            <input class="form-input" type="number" placeholder="Amount ($)" id="txAmount"/>
+            <select class="form-select" id="txCategory">
+              <option value="food">🍔 Food & Dining</option>
+              <option value="transport">🚗 Transport</option>
+              <option value="shopping">🛍️ Shopping</option>
+              <option value="health">💊 Health</option>
+              <option value="entertainment">🎮 Entertainment</option>
+              <option value="bills">📱 Bills & Utilities</option>
+              <option value="business">💼 Business</option>
+              <option value="other">📦 Other</option>
+            </select>
+            <input class="form-input" type="date" id="txDate"/>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-secondary" onclick="toggleForm()">Cancel</button>
+            <button class="btn btn-primary" onclick="addTransaction()">Add ✓</button>
+          </div>
+        </div>
+
+        <!-- Transactions -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Recent Transactions</div>
+            <button class="card-action">View All</button>
+          </div>
+
+          <div class="date-group">Today — June 6, 2026</div>
+
+          <div class="transaction" id="txList">
+            <div class="tx-icon" style="background:rgba(255,107,53,0.15)">🌐</div>
+            <div class="tx-info">
+              <div class="tx-name">mydaywise.xyz Domain</div>
+              <div class="tx-meta">Business · 3:29 AM</div>
+            </div>
+            <div class="tx-amount out">-$1.20</div>
+            <button class="tx-delete" onclick="deleteTx(this)">🗑️</button>
+          </div>
+
+          <div class="date-group">Yesterday — June 5, 2026</div>
+
+          <div class="transaction">
+            <div class="tx-icon" style="background:rgba(52,211,153,0.15)">💼</div>
+            <div class="tx-info">
+              <div class="tx-name">Freelance Payment</div>
+              <div class="tx-meta">Income · 2:00 PM</div>
+            </div>
+            <div class="tx-amount in">+$500.00</div>
+            <button class="tx-delete" onclick="deleteTx(this)">🗑️</button>
+          </div>
+
+          <div class="transaction">
+            <div class="tx-icon" style="background:rgba(251,191,36,0.15)">🍔</div>
+            <div class="tx-info">
+              <div class="tx-name">Grocery Shopping</div>
+              <div class="tx-meta">Food & Dining · 11:30 AM</div>
+            </div>
+            <div class="tx-amount out">-$67.50</div>
+            <button class="tx-delete" onclick="deleteTx(this)">🗑️</button>
+          </div>
+
+          <div class="transaction">
+            <div class="tx-icon" style="background:rgba(139,92,246,0.15)">🚗</div>
+            <div class="tx-info">
+              <div class="tx-name">Gas Station</div>
+              <div class="tx-meta">Transport · 9:15 AM</div>
+            </div>
+            <div class="tx-amount out">-$45.00</div>
+            <button class="tx-delete" onclick="deleteTx(this)">🗑️</button>
+          </div>
+
+          <div class="transaction">
+            <div class="tx-icon" style="background:rgba(59,130,246,0.15)">📱</div>
+            <div class="tx-info">
+              <div class="tx-name">Phone Bill</div>
+              <div class="tx-meta">Bills & Utilities · 8:00 AM</div>
+            </div>
+            <div class="tx-amount out">-$55.00</div>
+            <button class="tx-delete" onclick="deleteTx(this)">🗑️</button>
+          </div>
+
+          <div id="newTransactions"></div>
+        </div>
+      </div>
+
+      <!-- Right Panel -->
+      <div class="right-col">
+
+        <!-- Savings Goal -->
+        <div class="savings-card">
+          <div class="savings-title">🎯 Monthly Savings Goal</div>
+          <div class="savings-amount">$620</div>
+          <div class="savings-sub">of $1,000 goal saved</div>
+          <div class="savings-bar"><div class="savings-fill"></div></div>
+          <div class="savings-meta"><span>62% achieved</span><span>$380 to go</span></div>
+        </div>
+
+        <!-- Budget by Category -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header">
+            <div class="card-title">📊 Budget by Category</div>
+          </div>
+
+          <div class="budget-item">
+            <div class="budget-header">
+              <div class="budget-label">🍔 Food & Dining</div>
+              <div class="budget-amounts">$267 / $400</div>
+            </div>
+            <div class="budget-bar"><div class="budget-fill" style="width:67%;background:linear-gradient(90deg,#fbbf24,#f59e0b)"></div></div>
+          </div>
+
+          <div class="budget-item">
+            <div class="budget-header">
+              <div class="budget-label">🚗 Transport</div>
+              <div class="budget-amounts">$145 / $200</div>
+            </div>
+            <div class="budget-bar"><div class="budget-fill" style="width:72%;background:linear-gradient(90deg,#60a5fa,#3b82f6)"></div></div>
+          </div>
+
+          <div class="budget-item">
+            <div class="budget-header">
+              <div class="budget-label">🛍️ Shopping</div>
+              <div class="budget-amounts">$320 / $300</div>
+            </div>
+            <div class="budget-bar"><div class="budget-fill" style="width:100%;background:linear-gradient(90deg,#f87171,#ef4444)"></div></div>
+          </div>
+
+          <div class="budget-item">
+            <div class="budget-header">
+              <div class="budget-label">📱 Bills</div>
+              <div class="budget-amounts">$155 / $250</div>
+            </div>
+            <div class="budget-bar"><div class="budget-fill" style="width:62%;background:linear-gradient(90deg,#a78bfa,#8b5cf6)"></div></div>
+          </div>
+
+          <div class="budget-item">
+            <div class="budget-header">
+              <div class="budget-label">💼 Business</div>
+              <div class="budget-amounts">$1.20 / $100</div>
+            </div>
+            <div class="budget-bar"><div class="budget-fill" style="width:1%;background:linear-gradient(90deg,#34d399,#059669)"></div></div>
+          </div>
+        </div>
+
+        <!-- AI Insight -->
+        <div class="card" style="background:linear-gradient(135deg,#1a1035,#0f2035);border-color:rgba(139,92,246,0.2);margin-bottom:0">
+          <div class="card-title" style="color:#a78bfa;margin-bottom:12px">🤖 AI Money Insight</div>
+          <p style="font-size:13px;color:#c4b5fd;line-height:1.6">
+            ⚠️ You've exceeded your Shopping budget by $20. Try cutting back on non-essentials this week. On the bright side — your Business spending is only $1.20 this month! You're saving 35% of income which is excellent. Keep it up! 💪
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  let currentType = 'expense';
+
+  function toggleForm() {
+    const form = document.getElementById('addForm');
+    form.classList.toggle('visible');
+    if (form.classList.contains('visible')) document.getElementById('txDesc').focus();
+  }
+
+  function setType(type) {
+    currentType = type;
+    document.getElementById('expenseBtn').classList.toggle('active', type === 'expense');
+    document.getElementById('incomeBtn').classList.toggle('active', type === 'income');
+  }
+
+  function addTransaction() {
+    const desc = document.getElementById('txDesc').value.trim();
+    const amount = document.getElementById('txAmount').value;
+    const category = document.getElementById('txCategory');
+    const categoryText = category.options[category.selectedIndex].text;
+    if (!desc || !amount) return;
+
+    const icons = { food:'🍔', transport:'🚗', shopping:'🛍️', health:'💊', entertainment:'🎮', bills:'📱', business:'💼', other:'📦' };
+    const colors = { food:'rgba(251,191,36,0.15)', transport:'rgba(139,92,246,0.15)', shopping:'rgba(248,113,113,0.15)', health:'rgba(52,211,153,0.15)', entertainment:'rgba(59,130,246,0.15)', bills:'rgba(255,107,53,0.15)', business:'rgba(52,211,153,0.15)', other:'rgba(255,255,255,0.1)' };
+    const cat = document.getElementById('txCategory').value;
+    const isIncome = currentType === 'income';
+
+    const tx = document.createElement('div');
+    tx.className = 'transaction';
+    tx.innerHTML = `
+      <div class="tx-icon" style="background:${colors[cat]}">${icons[cat]}</div>
+      <div class="tx-info">
+        <div class="tx-name">${desc}</div>
+        <div class="tx-meta">${categoryText} · Just now</div>
+      </div>
+      <div class="tx-amount ${isIncome ? 'in' : 'out'}">${isIncome ? '+' : '-'}$${parseFloat(amount).toFixed(2)}</div>
+      <button class="tx-delete" onclick="deleteTx(this)">🗑️</button>
+    `;
+
+    document.getElementById('newTransactions').prepend(tx);
+    document.getElementById('txDesc').value = '';
+    document.getElementById('txAmount').value = '';
+    toggleForm();
+  }
+
+  function deleteTx(btn) {
+    const tx = btn.closest('.transaction');
+    tx.style.opacity = '0';
+    tx.style.transform = 'translateX(20px)';
+    tx.style.transition = 'all 0.3s';
+    setTimeout(() => tx.remove(), 300);
+  }
+</script>
+
+</body>
+</html>
