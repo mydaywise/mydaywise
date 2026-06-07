@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DayWise — Task Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0A1628;
+    min-height: 100vh;
+    color: white;
+  }
+
+  .app { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 240px;
+    background: #0D1E35;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    padding: 32px 20px;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 40px;
+    padding-left: 8px;
+  }
+
+  .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 900;
+  }
+
+  .logo-text span:last-child { color: #FF6B35; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #5a7a9a;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+  .nav-item.active {
+    background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(255,179,71,0.1));
+    color: white;
+    border: 1px solid rgba(255,107,53,0.3);
+  }
+
+  .nav-section {
+    font-size: 11px;
+    color: #2a4a6a;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding-left: 12px;
+    margin: 16px 0 8px;
+  }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 20px;
+  }
+
+  .user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FF6B35, #FFB347);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+  }
+
+  .user-info p { font-size: 13px; font-weight: 500; }
+  .user-info span { font-size: 11px; color: #5a7a9a; }
+
+  /* Main */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    padding: 32px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+  }
+
+  .header h1 span { color: #FF6B35; }
+  .header p { color: #5a7a9a; font-size: 14px; margin-top: 4px; }
+
+  .header-actions { display: flex; gap: 12px; }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #FF6B35, #FFB347);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 16px rgba(255,107,53,0.3);
+  }
+
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,107,53,0.4); }
+
+  .btn-secondary {
+    background: rgba(255,255,255,0.06);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+  /* Stats */
+  .stats { display: flex; gap: 16px; margin-bottom: 28px; }
+
+  .stat {
+    flex: 1;
+    background: #0D1E35;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .stat-value { font-size: 24px; font-weight: 700; }
+  .stat-label { font-size: 12px; color: #5a7a9a; margin-top: 2px; }
+
+  /* Filter tabs */
+  .filter-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: #0D1E35;
+    padding: 6px;
+    border-radius: 14px;
+    width: fit-content;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .filter-tab {
+    padding: 8px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #5a7a9a;
+    border: none;
+    background: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .filter-tab.active {
+    background: linear-gradient(135deg, #FF6B35, #FFB347);
+    color: white;
+  }
+
+  .filter-tab:hover:not(.active) { color: white; }
+
+  /* Main layout */
+  .content { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+
+  /* Task list */
+  .task-section { margin-bottom: 24px; }
+
+  .section-title {
+    font-size: 13px;
+    color: #5a7a9a;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-count {
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: #7a9ab5;
+  }
+
+  .task-card {
+    background: #0D1E35;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: all 0.2s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .task-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+  }
+
+  .task-card.high::before { background: #f87171; }
+  .task-card.medium::before { background: #fbbf24; }
+  .task-card.low::before { background: #34d399; }
+
+  .task-card:hover {
+    transform: translateX(4px);
+    border-color: rgba(255,107,53,0.2);
+  }
+
+  .task-check {
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    border: 2px solid rgba(255,255,255,0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .task-check.done {
+    background: linear-gradient(135deg, #FF6B35, #FFB347);
+    border-color: transparent;
+  }
+
+  .task-check.done::after { content: '✓'; font-size: 13px; color: white; font-weight: 600; }
+
+  .task-body { flex: 1; }
+  .task-name { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+  .task-name.done { text-decoration: line-through; color: #3a5a7a; }
+
+  .task-meta {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .task-tag {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  .tag-high { background: rgba(239,68,68,0.15); color: #f87171; }
+  .tag-medium { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .tag-low { background: rgba(52,211,153,0.15); color: #34d399; }
+  .tag-work { background: rgba(139,92,246,0.15); color: #a78bfa; }
+  .tag-personal { background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .tag-health { background: rgba(16,185,129,0.15); color: #34d399; }
+
+  .task-due { font-size: 12px; color: #5a7a9a; display: flex; align-items: center; gap: 4px; }
+  .task-due.overdue { color: #f87171; }
+
+  .task-actions {
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .task-card:hover .task-actions { opacity: 1; }
+
+  .task-action-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    border: none;
+    color: #7a9ab5;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+
+  .task-action-btn:hover { background: rgba(255,107,53,0.2); color: #FF6B35; }
+
+  /* Add task form */
+  .add-task-card {
+    background: #0D1E35;
+    border: 1px dashed rgba(255,107,53,0.3);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 10px;
+    display: none;
+  }
+
+  .add-task-card.visible { display: block; }
+
+  .form-row { display: flex; gap: 12px; margin-bottom: 12px; }
+
+  .form-input {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: white;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus { border-color: #FF6B35; }
+  .form-input::placeholder { color: #2a4a6a; }
+
+  .form-select {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: white;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .form-select option { background: #0D1E35; }
+
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* Right panel */
+  .right-panel { display: flex; flex-direction: column; gap: 20px; }
+
+  .panel-card {
+    background: #0D1E35;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px;
+    padding: 20px;
+  }
+
+  .panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Progress circles */
+  .progress-circles { display: flex; gap: 12px; justify-content: space-around; }
+
+  .progress-circle {
+    text-align: center;
+  }
+
+  .circle-wrap {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    position: relative;
+  }
+
+  .circle-value { font-size: 16px; font-weight: 700; }
+  .circle-label { font-size: 11px; color: #5a7a9a; }
+
+  /* Category list */
+  .category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .category-item:last-child { border-bottom: none; }
+  .category-left { display: flex; align-items: center; gap: 10px; }
+  .category-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .category-name { font-size: 13px; }
+  .category-count { font-size: 12px; color: #5a7a9a; }
+
+  /* Mobile */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 20px; }
+    .stats { flex-wrap: wrap; }
+    .content { grid-template-columns: 1fr; }
+    .stat { min-width: calc(50% - 8px); }
+  }
+
+  /* Animations */
+  .task-card { animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <svg width="38" height="38" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="12" fill="#FF6B35"/>
+        <line x1="20" y1="4" x2="20" y2="9" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="20" y1="31" x2="20" y2="36" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="4" y1="20" x2="9" y2="20" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="31" y1="20" x2="36" y2="20" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="13,20 18,25 28,14" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="logo-text"><span>Day</span><span>Wise</span></div>
+    </div>
+
+    <div class="nav-section">Main</div>
+    <div class="nav-item" onclick="location.href='index.html'"><span>🏠</span> Dashboard</div>
+    <div class="nav-item active"><span>✅</span> Tasks</div>
+    <div class="nav-item" onclick="location.href='daywise-expenses.html'" style="cursor:pointer"><span>💰</span> Expenses</div>
+    <div class="nav-item" onclick="location.href='daywise-dashboard.html'" style="cursor:pointer"><span>🎯</span> Goals</div>
+
+    <div class="nav-section">Life</div>
+    <div class="nav-item"><span>😴</span> Sleep</div>
+    <div class="nav-item"><span>📓</span> Journal</div>
+    <div class="nav-item"><span>💪</span> Habits</div>
+    <div class="nav-item" onclick="location.href='daywise-ai.html'" style="cursor:pointer"><span>🤖</span> AI Assistant</div>
+
+    <div class="nav-section">Account</div>
+    <div class="nav-item"><span>⚙️</span> Settings</div>
+
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar">S</div>
+        <div class="user-info">
+          <p>Saikishore</p>
+          <span>Free Plan</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Header -->
+    <div class="header">
+      <div>
+        <h1>Task <span>Manager</span> ✅</h1>
+        <p>Stay on top of everything that matters</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" onclick="toggleAddTask()">+ New Task</button>
+        <button class="btn btn-primary">🤖 AI Suggest</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-icon" style="background:rgba(255,107,53,0.15)">📋</div>
+        <div>
+          <div class="stat-value" id="totalCount">8</div>
+          <div class="stat-label">Total Tasks</div>
+        </div>
+      </div>
+      <div class="stat">
+        <div class="stat-icon" style="background:rgba(52,211,153,0.15)">✅</div>
+        <div>
+          <div class="stat-value" id="doneCount">3</div>
+          <div class="stat-label">Completed</div>
+        </div>
+      </div>
+      <div class="stat">
+        <div class="stat-icon" style="background:rgba(251,191,36,0.15)">⏳</div>
+        <div>
+          <div class="stat-value" id="pendingCount">5</div>
+          <div class="stat-label">Pending</div>
+        </div>
+      </div>
+      <div class="stat">
+        <div class="stat-icon" style="background:rgba(239,68,68,0.15)">🔥</div>
+        <div>
+          <div class="stat-value" id="highCount">2</div>
+          <div class="stat-label">High Priority</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="filterTasks('all', this)">All</button>
+      <button class="filter-tab" onclick="filterTasks('today', this)">Today</button>
+      <button class="filter-tab" onclick="filterTasks('high', this)">High Priority</button>
+      <button class="filter-tab" onclick="filterTasks('done', this)">Completed</button>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <div>
+
+        <!-- Add Task Form -->
+        <div class="add-task-card" id="addTaskForm">
+          <div class="form-row">
+            <input class="form-input" type="text" placeholder="What needs to be done?" id="newTaskName" style="flex:2"/>
+            <select class="form-select" id="newTaskPriority">
+              <option value="high">🔴 High</option>
+              <option value="medium" selected>🟡 Medium</option>
+              <option value="low">🟢 Low</option>
+            </select>
+            <select class="form-select" id="newTaskCategory">
+              <option value="work">💼 Work</option>
+              <option value="personal">👤 Personal</option>
+              <option value="health">💪 Health</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <input class="form-input" type="date" id="newTaskDate"/>
+            <input class="form-input" type="text" placeholder="Add a note..." id="newTaskNote"/>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-secondary" onclick="toggleAddTask()">Cancel</button>
+            <button class="btn btn-primary" onclick="addTask()">Add Task ✓</button>
+          </div>
+        </div>
+
+        <!-- Today's Tasks -->
+        <div class="task-section" id="todaySection">
+          <div class="section-title">📅 Today <span class="section-count" id="todaySectionCount">5</span></div>
+
+          <div class="task-card high" data-priority="high" data-category="work" data-done="false" data-when="today">
+            <div class="task-check" onclick="toggleTask(this)"></div>
+            <div class="task-body">
+              <div class="task-name">Buy mydaywise.xyz domain</div>
+              <div class="task-meta">
+                <span class="task-tag tag-high">High</span>
+                <span class="task-tag tag-work">Work</span>
+                <span class="task-due">📅 Today</span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <button class="task-action-btn">✏️</button>
+              <button class="task-action-btn" onclick="deleteTask(this)">🗑️</button>
+            </div>
+          </div>
+
+          <div class="task-card high" data-priority="high" data-category="work" data-done="false" data-when="today">
+            <div class="task-check" onclick="toggleTask(this)"></div>
+            <div class="task-body">
+              <div class="task-name">Design DayWise welcome screen</div>
+              <div class="task-meta">
+                <span class="task-tag tag-high">High</span>
+                <span class="task-tag tag-work">Work</span>
+                <span class="task-due">📅 Today</span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <button class="task-action-btn">✏️</button>
+              <button class="task-action-btn" onclick="deleteTask(this)">🗑️</button>
+            </div>
+          </div>
+
+          <div class="task-card medium" data-priority="medium" data-category="work" data-done="false" data-when="today">
+            <div class="task-check" onclick="toggleTask(this)"></div>
+            <div class="task-body">
+              <div class="task-name">Set up GitHub repository</div>
+              <div class="task-meta">
+                <span class="task-tag tag-medium">Medium</span>
+                <span class="task-tag tag-work">Work</span>
+                <span class="task-due">📅 Today</span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <button class="task-action-btn">✏️</button>
+              <button class="task-action-btn" onclick="deleteTask(this)">🗑️</button>
+            </div>
+          </div>
+
+          <div class="task-card low" data-priority="low" data-category="health" data-done="false" data-when="today">
+            <div class="task-check" onclick="toggleTask(this)"></div>
+            <div class="task-body">
+              <div class="task-name">Drink 8 glasses of water</div>
+              <div class="task-meta">
+                <span class="task-tag tag-low">Low</span>
+                <span class="task-tag tag-health">Health</span>
+                <span class="task-due">📅 Today</span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <button class="task-action-btn">✏️</button>
+              <button class="task-action-btn" onclick="deleteTask(this)">🗑️</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Completed -->
+        <div class="task-section" id="doneSection">
+          <div class="section-title">✅ Completed <span class="section-count">3</span></div>
+
+          <div class="task-card low" data-priority="low" data-category="work" data-done="true" data-when="today">
+            <div class="task-check done" onclick="toggleTask(this)"></div>
+            <div class="task-body">
+              <div class="task-name done">Create Gmail account</div>
+              <div class="task-meta">
+                <span class="task-tag tag-low">Low</span>
+                <span class="task-tag tag-work">Work</span>
+                <span class="task-due">✅ Done</span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <button class="task-action-btn" onclick="deleteTask(this)">🗑️</button>
+            </div>
+          </div>
+
+          <div class="task-card low" data-priority="low" data-category="work" data-done="true" data-when="today">
+            <div class="task-check done" onclick="toggleTask(this)"></div>
+            <div class="task-body">
+              <div class="task-name done">Create Instagram @mydaywise</div>
+              <div class="task-meta">
+                <span class="task-tag tag-low">Low</span>
+                <span class="task-tag tag-work">Work</span>
+                <span class="task-due">✅ Done</span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <button class="task-action-btn" onclick="deleteTask(this)">🗑️</button>
+            </div>
+          </div>
+
+          <div class="task-card medium" data-priority="medium" data-category="work" data-done="true" data-when="today">
+            <div class="task-check done" onclick="toggleTask(this)"></div>
+            <div class="task-body">
+              <div class="task-name done">Design DayWise logo</div>
+              <div class="task-meta">
+                <span class="task-tag tag-medium">Medium</span>
+                <span class="task-tag tag-work">Work</span>
+                <span class="task-due">✅ Done</span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <button class="task-action-btn" onclick="deleteTask(this)">🗑️</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right Panel -->
+      <div class="right-panel">
+
+        <!-- Progress -->
+        <div class="panel-card">
+          <div class="panel-title">📊 Today's Progress</div>
+          <div class="progress-circles">
+            <div class="progress-circle">
+              <div class="circle-wrap" style="background: conic-gradient(#FF6B35 37%, rgba(255,255,255,0.04) 0%)">
+                <div class="circle-value">37%</div>
+              </div>
+              <div class="circle-label">Overall</div>
+            </div>
+            <div class="progress-circle">
+              <div class="circle-wrap" style="background: conic-gradient(#f87171 40%, rgba(255,255,255,0.04) 0%)">
+                <div class="circle-value">2/5</div>
+              </div>
+              <div class="circle-label">High</div>
+            </div>
+            <div class="progress-circle">
+              <div class="circle-wrap" style="background: conic-gradient(#34d399 67%, rgba(255,255,255,0.04) 0%)">
+                <div class="circle-value">67%</div>
+              </div>
+              <div class="circle-label">Low</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="panel-card">
+          <div class="panel-title">🗂️ By Category</div>
+          <div class="category-item">
+            <div class="category-left">
+              <div class="category-dot" style="background:#a78bfa"></div>
+              <div class="category-name">💼 Work</div>
+            </div>
+            <div class="category-count">5 tasks</div>
+          </div>
+          <div class="category-item">
+            <div class="category-left">
+              <div class="category-dot" style="background:#60a5fa"></div>
+              <div class="category-name">👤 Personal</div>
+            </div>
+            <div class="category-count">2 tasks</div>
+          </div>
+          <div class="category-item">
+            <div class="category-left">
+              <div class="category-dot" style="background:#34d399"></div>
+              <div class="category-name">💪 Health</div>
+            </div>
+            <div class="category-count">1 task</div>
+          </div>
+        </div>
+
+        <!-- AI Tip -->
+        <div class="panel-card" style="background:linear-gradient(135deg,#1a1035,#0f2035);border-color:rgba(139,92,246,0.2)">
+          <div class="panel-title" style="color:#a78bfa">🤖 AI Tip</div>
+          <p style="font-size:13px;color:#c4b5fd;line-height:1.6">
+            You have 2 high priority tasks left today. Focus on completing the domain setup first — it unblocks everything else! You're 37% done. Strong start! 💪
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  function toggleTask(el) {
+    el.classList.toggle('done');
+    const card = el.closest('.task-card');
+    const name = card.querySelector('.task-name');
+    name.classList.toggle('done');
+    const isDone = el.classList.contains('done');
+    card.dataset.done = isDone;
+    updateCounts();
+  }
+
+  function deleteTask(btn) {
+    const card = btn.closest('.task-card');
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(20px)';
+    card.style.transition = 'all 0.3s';
+    setTimeout(() => { card.remove(); updateCounts(); }, 300);
+  }
+
+  function toggleAddTask() {
+    const form = document.getElementById('addTaskForm');
+    form.classList.toggle('visible');
+    if (form.classList.contains('visible')) {
+      document.getElementById('newTaskName').focus();
+    }
+  }
+
+  function addTask() {
+    const name = document.getElementById('newTaskName').value.trim();
+    if (!name) return;
+
+    const priority = document.getElementById('newTaskPriority').value;
+    const category = document.getElementById('newTaskCategory').value;
+    const date = document.getElementById('newTaskDate').value;
+
+    const card = document.createElement('div');
+    card.className = `task-card ${priority}`;
+    card.dataset.priority = priority;
+    card.dataset.done = 'false';
+    card.dataset.when = 'today';
+
+    const priorityLabels = { high: '🔴 High', medium: '🟡 Medium', low: '🟢 Low' };
+    const categoryLabels = { work: '💼 Work', personal: '👤 Personal', health: '💪 Health' };
+    const tagClasses = { high: 'tag-high', medium: 'tag-medium', low: 'tag-low' };
+    const catClasses = { work: 'tag-work', personal: 'tag-personal', health: 'tag-health' };
+
+    card.innerHTML = `
+      <div class="task-check" onclick="toggleTask(this)"></div>
+      <div class="task-body">
+        <div class="task-name">${name}</div>
+        <div class="task-meta">
+          <span class="task-tag ${tagClasses[priority]}">${priority.charAt(0).toUpperCase() + priority.slice(1)}</span>
+          <span class="task-tag ${catClasses[category]}">${categoryLabels[category]}</span>
+          <span class="task-due">📅 ${date || 'Today'}</span>
+        </div>
+      </div>
+      <div class="task-actions">
+        <button class="task-action-btn">✏️</button>
+        <button class="task-action-btn" onclick="deleteTask(this)">🗑️</button>
+      </div>
+    `;
+
+    document.getElementById('todaySection').appendChild(card);
+    document.getElementById('newTaskName').value = '';
+    document.getElementById('newTaskNote').value = '';
+    toggleAddTask();
+    updateCounts();
+  }
+
+  function filterTasks(filter, btn) {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.task-card').forEach(card => {
+      let show = true;
+      if (filter === 'today') show = card.dataset.when === 'today';
+      if (filter === 'high') show = card.dataset.priority === 'high';
+      if (filter === 'done') show = card.dataset.done === 'true';
+      card.style.display = show ? 'flex' : 'none';
+    });
+  }
+
+  function updateCounts() {
+    const all = document.querySelectorAll('.task-card');
+    const done = document.querySelectorAll('.task-card[data-done="true"]');
+    const high = document.querySelectorAll('.task-card[data-priority="high"][data-done="false"]');
+    document.getElementById('totalCount').textContent = all.length;
+    document.getElementById('doneCount').textContent = done.length;
+    document.getElementById('pendingCount').textContent = all.length - done.length;
+    document.getElementById('highCount').textContent = high.length;
+  }
+
+  document.getElementById('newTaskName').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') addTask();
+  });
+</script>
+
+</body>
+</html>
